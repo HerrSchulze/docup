@@ -1,0 +1,187 @@
+<div class="upload-container">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="mb-0">📁 DocUp - Document Upload</h2>
+      <p class="text-muted">Upload your documents with OCR and virus scanning</p>
+    </div>
+    
+    <div class="card-body">
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+      </div>
+
+      <!-- Camera Error -->
+      <div *ngIf="cameraError" class="alert alert-warning" role="alert">
+        <i class="fas fa-camera"></i> {{ cameraError }}
+      </div>
+
+      <!-- Camera Section -->
+      <div class="camera-section mb-4" *ngIf="!isUploading">
+        <div class="row">
+          <div class="col-md-6">
+            <button 
+              class="btn btn-outline-primary btn-lg w-100 mb-3"
+              (click)="startCamera()"
+              [disabled]="isCameraActive">
+              <i class="fas fa-camera"></i> Take Photo
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button 
+              class="btn btn-outline-secondary btn-lg w-100 mb-3"
+              (click)="fileInput.click()">
+              <i class="fas fa-upload"></i> Choose Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Camera View -->
+        <div *ngIf="isCameraActive" class="camera-view text-center mb-3">
+          <video #videoElement autoplay playsinline class="camera-video"></video>
+          <div class="camera-controls mt-2">
+            <button class="btn btn-success me-2" (click)="capturePhoto()">
+              <i class="fas fa-circle"></i> Capture
+            </button>
+            <button class="btn btn-secondary" (click)="stopCamera()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Input (Hidden) -->
+      <input 
+        #fileInput
+        type="file" 
+        class="d-none"
+        multiple
+        accept="image/*,.pdf"
+        (change)="onFileSelected($event)">
+
+      <!-- Drag & Drop Area -->
+      <div 
+        class="drop-zone mb-4"
+        [class.drag-over]="isDragOver"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+        *ngIf="!isUploading && !isCameraActive">
+        
+        <div class="drop-zone-content">
+          <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+          <h4>Drag & Drop Files Here</h4>
+          <p class="text-muted">or click to browse</p>
+          <small class="text-muted">
+            Supports: JPG, PNG, PDF • Max size: 10MB
+          </small>
+        </div>
+      </div>
+
+      <!-- Selected Files Preview -->
+      <div *ngIf="selectedFiles.length > 0" class="selected-files mb-4">
+        <h5>Selected Files:</h5>
+        <div class="row">
+          <div class="col-md-6" *ngFor="let filePreview of selectedFiles; let i = index">
+            <div class="file-preview-card">
+              <div class="file-preview-header">
+                <span class="file-name">{{ filePreview.metadata.name }}</span>
+                <button 
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="removeFile(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <!-- Image Preview -->
+              <div *ngIf="filePreview.preview" class="file-preview-image">
+                <img [src]="filePreview.preview" alt="Preview" class="img-fluid">
+              </div>
+              
+              <!-- PDF Icon -->
+              <div *ngIf="!filePreview.preview && filePreview.file.type === 'application/pdf'" 
+                   class="file-preview-pdf">
+                <i class="fas fa-file-pdf fa-4x text-danger"></i>
+                <p>PDF Document</p>
+              </div>
+
+              <!-- File Info -->
+              <div class="file-info">
+                <small class="text-muted">
+                  {{ formatFileSize(filePreview.metadata.size) }} • {{ filePreview.metadata.type }}
+                </small>
+              </div>
+
+              <!-- OCR Preview -->
+              <div *ngIf="filePreview.ocrText" class="ocr-preview">
+                <h6>OCR Preview:</h6>
+                <div class="ocr-text">
+                  {{ filePreview.ocrText | slice:0:200 }}
+                  <span *ngIf="filePreview.ocrText.length > 200">...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div *ngIf="isUploading" class="upload-progress mb-4">
+        <h5>{{ uploadProgress.message }}</h5>
+        <div class="progress mb-2">
+          <div 
+            class="progress-bar progress-bar-striped progress-bar-animated"
+            [class.bg-success]="uploadProgress.status === 'completed'"
+            [class.bg-primary]="uploadProgress.status === 'uploading'"
+            [class.bg-warning]="uploadProgress.status === 'processing'"
+            [style.width.%]="uploadProgress.progress">
+          </div>
+        </div>
+        <small class="text-muted">{{ uploadProgress.progress }}% complete</small>
+      </div>
+
+      <!-- Upload Result -->
+      <div *ngIf="uploadResult" class="upload-result">
+        <div class="alert alert-success">
+          <h5><i class="fas fa-check-circle"></i> Upload Successful!</h5>
+          <div class="result-details">
+            <p><strong>Filename:</strong> {{ uploadResult.filename }}</p>
+            <p><strong>Size:</strong> {{ formatFileSize(uploadResult.size) }}</p>
+            <p><strong>Type:</strong> {{ uploadResult.mimeType }}</p>
+            <p><strong>Uploaded:</strong> {{ uploadResult.uploadedAt | date:'medium' }}</p>
+            <p><strong>Virus Scan:</strong> 
+              <span [class]="uploadResult.virusScanPassed ? 'text-success' : 'text-danger'">
+                {{ uploadResult.virusScanPassed ? '✓ Passed' : '✗ Failed' }}
+              </span>
+            </p>
+            
+            <!-- OCR Results -->
+            <div *ngIf="uploadResult.ocrText" class="ocr-results mt-3">
+              <h6>Extracted Text:</h6>
+              <div class="ocr-text-result">
+                {{ uploadResult.ocrText }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button 
+          *ngIf="selectedFiles.length > 0 && !isUploading"
+          class="btn btn-primary btn-lg me-2"
+          (click)="uploadFiles()">
+          <i class="fas fa-upload"></i> Upload Files
+        </button>
+        
+        <button 
+          class="btn btn-outline-secondary"
+          (click)="clearAll()">
+          <i class="fas fa-refresh"></i> Clear All
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

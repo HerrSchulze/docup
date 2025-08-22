@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+  application:
+    name: docup-backend
+
+docup:
+  upload:
+    path: ${UPLOAD_PATH:/app/uploads}
+    allowed-types: jpg,jpeg,png,pdf
+    max-file-size: 10485760  # 10MB in bytes
+  clamav:
+    host: ${CLAMAV_HOST:clamav}
+    port: ${CLAMAV_PORT:3310}
+    timeout: 30000  # Increased timeout for Docker
+    enabled: true
+  ocr:
+    language: eng+deu
+    tesseract-path: ${TESSERACT_PATH:/usr/bin/tesseract}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.docup: INFO
+    org.springframework.web: INFO
+    root: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+# Docker-specific CORS configuration
+docup:
+  cors:
+    allowed-origins: 
+      - "http://localhost"
+      - "http://localhost:80"
+      - "http://frontend"
+    allowed-methods:
+      - GET
+      - POST
+      - OPTIONS
+    allowed-headers:
+      - Origin
+      - Content-Type
+      - Accept
+      - Authorization

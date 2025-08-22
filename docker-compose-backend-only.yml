@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      clamav:
+        condition: service_healthy
+    environment:
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+      - UPLOAD_PATH=/app/uploads
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - docup-network
+
+  clamav:
+    image: clamav/clamav:latest
+    ports:
+      - "3310:3310"
+    volumes:
+      - ./clamav:/var/lib/clamav
+    environment:
+      - CLAMAV_NO_FRESHCLAMD=false
+    networks:
+      - docup-network
+    healthcheck:
+      test: ["CMD", "clamdscan", "--ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  uploads:
+    driver: local
+  clamav-data:
+    driver: local
+
+networks:
+  docup-network:
+    driver: bridge

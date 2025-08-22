@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocUp - Simple Test Frontend</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #0d6efd;
+            background-color: #e7f3ff;
+        }
+        .file-preview {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .upload-result {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-file-upload"></i> DocUp - Simple Test Frontend
+            </span>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">📁 Document Upload Test</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Backend Status -->
+                        <div id="backendStatus" class="alert alert-info">
+                            <i class="fas fa-spinner fa-spin"></i> Checking backend status...
+                        </div>
+
+                        <!-- Error Message -->
+                        <div id="errorMessage" class="alert alert-danger d-none"></div>
+
+                        <!-- File Upload -->
+                        <div class="drop-zone mb-4" id="dropZone">
+                            <div class="drop-zone-content">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h4>Drag & Drop Files Here</h4>
+                                <p class="text-muted">or click to browse</p>
+                                <small class="text-muted">
+                                    Supports: JPG, PNG, PDF • Max size: 10MB
+                                </small>
+                            </div>
+                            <input type="file" id="fileInput" class="d-none" accept="image/*,.pdf" multiple>
+                        </div>
+
+                        <!-- Selected Files -->
+                        <div id="selectedFiles" class="mb-4 d-none">
+                            <h6>Selected Files:</h6>
+                            <div id="fileList"></div>
+                        </div>
+
+                        <!-- Upload Progress -->
+                        <div id="uploadProgress" class="mb-4 d-none">
+                            <h6>Upload Progress:</h6>
+                            <div class="progress">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small id="progressText" class="text-muted">0% complete</small>
+                        </div>
+
+                        <!-- Upload Result -->
+                        <div id="uploadResult" class="upload-result d-none">
+                            <h6>Upload Result:</h6>
+                            <pre id="resultJson" class="bg-light p-3 rounded"></pre>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-center">
+                            <button id="uploadBtn" class="btn btn-primary btn-lg me-2" disabled>
+                                <i class="fas fa-upload"></i> Upload Files
+                            </button>
+                            <button id="clearBtn" class="btn btn-outline-secondary">
+                                <i class="fas fa-refresh"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectedFiles = document.getElementById('selectedFiles');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const uploadResult = document.getElementById('uploadResult');
+        const resultJson = document.getElementById('resultJson');
+        const errorMessage = document.getElementById('errorMessage');
+        const backendStatus = document.getElementById('backendStatus');
+
+        let filesToUpload = [];
+
+        // Check backend status
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    backendStatus.className = 'alert alert-success';
+                    backendStatus.innerHTML = '<i class="fas fa-check-circle"></i> Backend is running and healthy!';
+                } else {
+                    throw new Error('Backend not responding');
+                }
+            } catch (error) {
+                backendStatus.className = 'alert alert-danger';
+                backendStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Backend is not available. Make sure the Spring Boot application is running on port 8080.';
+            }
+        }
+
+        // Event Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        uploadBtn.addEventListener('click', uploadFiles);
+        clearBtn.addEventListener('click', clearAll);
+
+        // Drag and Drop handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        }
+
+        // File handling
+        function handleFiles(files) {
+            filesToUpload = files;
+            displaySelectedFiles();
+            uploadBtn.disabled = files.length === 0;
+        }
+
+        function displaySelectedFiles() {
+            if (filesToUpload.length === 0) {
+                selectedFiles.classList.add('d-none');
+                return;
+            }
+
+            selectedFiles.classList.remove('d-none');
+            fileList.innerHTML = '';
+
+            filesToUpload.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'card mb-2';
+                fileItem.innerHTML = `
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${file.name}</strong><br>
+                                <small class="text-muted">${formatFileSize(file.size)} • ${file.type}</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            filesToUpload.splice(index, 1);
+            displaySelectedFiles();
+            uploadBtn.disabled = filesToUpload.length === 0;
+        }
+
+        // Upload functionality
+        async function uploadFiles() {
+            if (filesToUpload.length === 0) return;
+
+            hideError();
+            showProgress(0, 'Starting upload...');
+            uploadResult.classList.add('d-none');
+
+            // Upload files one by one (for simplicity)
+            for (const file of filesToUpload) {
+                try {
+                    const result = await uploadSingleFile(file);
+                    showResult(result);
+                } catch (error) {
+                    showError('Upload failed: ' + error.message);
+                }
+            }
+
+            hideProgress();
+        }
+
+        async function uploadSingleFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Upload failed');
+            }
+
+            return await response.json();
+        }
+
+        // UI helpers
+        function showProgress(percent, message) {
+            uploadProgress.classList.remove('d-none');
+            progressBar.style.width = percent + '%';
+            progressText.textContent = message;
+        }
+
+        function hideProgress() {
+            uploadProgress.classList.add('d-none');
+        }
+
+        function showResult(result) {
+            uploadResult.classList.remove('d-none');
+            resultJson.textContent = JSON.stringify(result, null, 2);
+        }
+
+        function showError(message) {
+            errorMessage.classList.remove('d-none');
+            errorMessage.textContent = message;
+        }
+
+        function hideError() {
+            errorMessage.classList.add('d-none');
+        }
+
+        function clearAll() {
+            filesToUpload = [];
+            fileInput.value = '';
+            selectedFiles.classList.add('d-none');
+            uploadResult.classList.add('d-none');
+            hideProgress();
+            hideError();
+            uploadBtn.disabled = true;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Initialize
+        checkBackendStatus();
+    </script>
+</body>
+</html>

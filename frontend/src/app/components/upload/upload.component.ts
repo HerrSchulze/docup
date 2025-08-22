@@ -1,0 +1,257 @@
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { UploadService, UploadProgress } from '../../services/upload.service';
+import { OcrService } from '../../services/ocr.service';
+import { CameraService } from '../../services/camera.service';
+import { UploadResponse } from '../../models/upload-response.interface';
+import { FilePreview } from '../../models/file-metadata.interface';
+
+@Component({
+  selector: 'app-upload',
+  templateUrl: './upload.component.html',
+  styleUrls: ['./upload.component.css']
+})
+export class UploadComponent implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
+
+  selectedFiles: FilePreview[] = [];
+  isDragOver = false;
+  isUploading = false;
+  uploadProgress: UploadProgress = { progress: 0, status: 'completed', message: '' };
+  uploadResult: UploadResponse | null = null;
+  errorMessage = '';
+  
+  // Camera related
+  isCameraActive = false;
+  mediaStream: MediaStream | null = null;
+  cameraError = '';
+
+  constructor(
+    private uploadService: UploadService,
+    private ocrService: OcrService,
+    private cameraService: CameraService
+  ) {}
+
+  ngOnInit(): void {
+    this.uploadService.getUploadProgress().subscribe(progress => {
+      this.uploadProgress = progress;
+    });
+  }
+
+  /**
+   * Handle file selection via input
+   */
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.handleFiles(Array.from(input.files));
+    }
+  }
+
+  /**
+   * Handle drag over event
+   */
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = true;
+  }
+
+  /**
+   * Handle drag leave event
+   */
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+  }
+
+  /**
+   * Handle file drop
+   */
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+    
+    if (event.dataTransfer?.files) {
+      this.handleFiles(Array.from(event.dataTransfer.files));
+    }
+  }
+
+  /**
+   * Process selected files
+   */
+  private async handleFiles(files: File[]): Promise<void> {
+    this.errorMessage = '';
+    this.selectedFiles = [];
+
+    for (const file of files) {
+      const validation = this.uploadService.validateFile(file);
+      
+      if (!validation.valid) {
+        this.errorMessage = validation.errors.join(', ');
+        continue;
+      }
+
+      const preview = await this.createFilePreview(file);
+      this.selectedFiles.push(preview);
+
+      // Start OCR preview for images
+      if (file.type.startsWith('image/') && this.ocrService.isOcrSupported(file.type)) {
+        this.performOcrPreview(preview);
+      }
+    }
+  }
+
+  /**
+   * Create file preview
+   */
+  private async createFilePreview(file: File): Promise<FilePreview> {
+    const preview = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string || '');
+      
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file);
+      } else {
+        resolve(''); // For PDFs, we'll show a default icon
+      }
+    });
+
+    return {
+      file,
+      preview,
+      metadata: {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified
+      }
+    };
+  }
+
+  /**
+   * Perform OCR preview
+   */
+  private async performOcrPreview(filePreview: FilePreview): Promise<void> {
+    try {
+      const ocrResult = await this.ocrService.extractTextFromImage(filePreview.file);
+      filePreview.ocrText = ocrResult.text;
+    } catch (error) {
+      console.error('OCR preview failed:', error);
+      filePreview.ocrText = 'OCR preview failed';
+    }
+  }
+
+  /**
+   * Upload selected files
+   */
+  uploadFiles(): void {
+    if (this.selectedFiles.length === 0) {
+      this.errorMessage = 'Please select files to upload';
+      return;
+    }
+
+    this.isUploading = true;
+    this.uploadResult = null;
+    this.errorMessage = '';
+    this.uploadService.resetProgress();
+
+    // For now, upload the first file (could be extended for multiple files)
+    const fileToUpload = this.selectedFiles[0];
+
+    this.uploadService.uploadFile(fileToUpload.file).subscribe({
+      next: (result) => {
+        if ('filename' in result) {
+          // Upload completed
+          this.uploadResult = result as UploadResponse;
+          this.isUploading = false;
+        }
+        // Progress updates are handled by the progress subscription
+      },
+      error: (error) => {
+        console.error('Upload failed:', error);
+        this.errorMessage = error.error?.message || 'Upload failed';
+        this.isUploading = false;
+      }
+    });
+  }
+
+  /**
+   * Start camera
+   */
+  async startCamera(): Promise<void> {
+    try {
+      this.cameraError = '';
+      this.mediaStream = await this.cameraService.getMediaStream();
+      
+      if (this.videoElement) {
+        this.videoElement.nativeElement.srcObject = this.mediaStream;
+        this.isCameraActive = true;
+      }
+    } catch (error) {
+      this.cameraError = error instanceof Error ? error.message : 'Camera access failed';
+    }
+  }
+
+  /**
+   * Stop camera
+   */
+  stopCamera(): void {
+    if (this.mediaStream) {
+      this.cameraService.stopMediaStream(this.mediaStream);
+      this.mediaStream = null;
+      this.isCameraActive = false;
+    }
+  }
+
+  /**
+   * Capture photo from camera
+   */
+  async capturePhoto(): Promise<void> {
+    if (!this.videoElement || !this.isCameraActive) {
+      return;
+    }
+
+    try {
+      const photoBlob = await this.cameraService.capturePhoto(this.videoElement.nativeElement);
+      const photoFile = new File([photoBlob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      this.handleFiles([photoFile]);
+      this.stopCamera();
+    } catch (error) {
+      this.cameraError = error instanceof Error ? error.message : 'Photo capture failed';
+    }
+  }
+
+  /**
+   * Remove file from selection
+   */
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
+  }
+
+  /**
+   * Clear all selections and reset
+   */
+  clearAll(): void {
+    this.selectedFiles = [];
+    this.uploadResult = null;
+    this.errorMessage = '';
+    this.uploadService.resetProgress();
+    this.stopCamera();
+    
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
+  }
+
+  /**
+   * Format file size for display
+   */
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+}
