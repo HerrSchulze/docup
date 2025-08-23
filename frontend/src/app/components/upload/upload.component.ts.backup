@@ -17,8 +17,8 @@ export class UploadComponent implements OnInit {
   selectedFiles: FilePreview[] = [];
   isDragOver = false;
   isUploading = false;
-  uploadProgress: number = 0;
-  uploadResults: UploadResponse[] = [];
+  uploadProgress: UploadProgress = { progress: 0, status: 'completed', message: '' };
+  uploadResult: UploadResponse | null = null;
   errorMessage = '';
   
   // Camera related
@@ -34,7 +34,7 @@ export class UploadComponent implements OnInit {
 
   ngOnInit(): void {
     this.uploadService.getUploadProgress().subscribe(progress => {
-      this.uploadProgress = progress.progress;
+      this.uploadProgress = progress;
     });
   }
 
@@ -105,102 +105,85 @@ export class UploadComponent implements OnInit {
    * Create file preview
    */
   private async createFilePreview(file: File): Promise<FilePreview> {
-    const preview: FilePreview = {
+    const preview = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string || '');
+      
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file);
+      } else {
+        resolve(''); // For PDFs, we'll show a default icon
+      }
+    });
+
+    return {
       file,
+      preview,
       metadata: {
         name: file.name,
         size: file.size,
         type: file.type,
-        lastModified: new Date(file.lastModified)
+        lastModified: file.lastModified
       }
     };
-
-    // Create image preview for image files
-    if (file.type.startsWith('image/')) {
-      preview.preview = await this.createImagePreview(file);
-    }
-
-    return preview;
   }
 
   /**
-   * Create image preview URL
+   * Perform OCR preview
    */
-  private createImagePreview(file: File): Promise<string> {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.readAsDataURL(file);
+  private async performOcrPreview(filePreview: FilePreview): Promise<void> {
+    try {
+      const ocrResult = await this.ocrService.extractTextFromImage(filePreview.file);
+      filePreview.ocrText = ocrResult.text;
+    } catch (error) {
+      console.error('OCR preview failed:', error);
+      filePreview.ocrText = 'OCR preview failed';
+    }
+  }
+
+  /**
+   * Upload selected files
+   */
+  uploadFiles(): void {
+    if (this.selectedFiles.length === 0) {
+      this.errorMessage = 'Please select files to upload';
+      return;
+    }
+
+    this.isUploading = true;
+    this.uploadResult = null;
+    this.errorMessage = '';
+    this.uploadService.resetProgress();
+
+    // For now, upload the first file (could be extended for multiple files)
+    const fileToUpload = this.selectedFiles[0];
+
+    this.uploadService.uploadFile(fileToUpload.file).subscribe({
+      next: (result) => {
+        if ('filename' in result) {
+          // Upload completed
+          this.uploadResult = result as UploadResponse;
+          this.isUploading = false;
+        }
+        // Progress updates are handled by the progress subscription
+      },
+      error: (error) => {
+        console.error('Upload failed:', error);
+        this.errorMessage = error.error?.message || 'Upload failed';
+        this.isUploading = false;
+      }
     });
   }
 
   /**
-   * Perform OCR preview (simplified)
-   */
-  private async performOcrPreview(filePreview: FilePreview): Promise<void> {
-    try {
-      // OCR preview disabled for now
-      // if (filePreview.preview) {
-      //   const ocrText = await this.ocrService.extractText(filePreview.preview);
-      //   filePreview.ocrText = ocrText;
-      // }
-    } catch (error) {
-      console.warn('OCR preview failed:', error);
-    }
-  }
-
-  /**
-   * Upload files to server
-   */
-  async uploadFiles(): Promise<void> {
-    if (this.selectedFiles.length === 0) return;
-
-    this.isUploading = true;
-    this.uploadResults = [];
-    this.uploadProgress = 0;
-    this.errorMessage = '';
-
-    try {
-      for (let i = 0; i < this.selectedFiles.length; i++) {
-        const filePreview = this.selectedFiles[i];
-        
-        // Update progress
-        this.uploadProgress = Math.round(((i + 0.5) / this.selectedFiles.length) * 100);
-        
-        try {
-          this.uploadService.uploadFile(filePreview.file).subscribe({
-            next: (response: any) => {
-              if (response && 'filename' in response) {
-                this.uploadResults.push(response as UploadResponse);
-              }
-            },
-            error: (error: any) => {
-              this.errorMessage = `Fehler beim Hochladen von ${filePreview.metadata.name}: ${error}`;
-            }
-          });
-        } catch (error) {
-          this.errorMessage = `Fehler beim Hochladen von ${filePreview.metadata.name}: ${error}`;
-        }
-        
-        // Update progress after each file
-        this.uploadProgress = Math.round(((i + 1) / this.selectedFiles.length) * 100);
-      }
-    } finally {
-      this.isUploading = false;
-    }
-  }
-
-  /**
-   * Start camera (mock implementation)
+   * Start camera
    */
   async startCamera(): Promise<void> {
-    this.cameraError = '';
-    
     try {
-      // Try to get user media
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      this.cameraError = '';
+      this.mediaStream = await this.cameraService.getMediaStream();
       
-      if (this.videoElement && this.mediaStream) {
+      if (this.videoElement) {
         this.videoElement.nativeElement.srcObject = this.mediaStream;
         this.isCameraActive = true;
       }
@@ -214,7 +197,7 @@ export class UploadComponent implements OnInit {
    */
   stopCamera(): void {
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.cameraService.stopMediaStream(this.mediaStream);
       this.mediaStream = null;
       this.isCameraActive = false;
     }
@@ -229,20 +212,10 @@ export class UploadComponent implements OnInit {
     }
 
     try {
-      const canvas = document.createElement('canvas');
-      const video = this.videoElement.nativeElement;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const photoFile = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            this.handleFiles([photoFile]);
-          }
-        }, 'image/jpeg', 0.9);
-      }
+      const photoBlob = await this.cameraService.capturePhoto(this.videoElement.nativeElement);
+      const photoFile = new File([photoBlob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      this.handleFiles([photoFile]);
       this.stopCamera();
     } catch (error) {
       this.cameraError = error instanceof Error ? error.message : 'Photo capture failed';
@@ -254,6 +227,21 @@ export class UploadComponent implements OnInit {
    */
   removeFile(index: number): void {
     this.selectedFiles.splice(index, 1);
+  }
+
+  /**
+   * Clear all selections and reset
+   */
+  clearAll(): void {
+    this.selectedFiles = [];
+    this.uploadResult = null;
+    this.errorMessage = '';
+    this.uploadService.resetProgress();
+    this.stopCamera();
+    
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 
   /**
@@ -273,7 +261,7 @@ export class UploadComponent implements OnInit {
   getFileTypeDisplay(mimeType: string): string {
     const typeMap: { [key: string]: string } = {
       'image/jpeg': 'JPEG Bild',
-      'image/jpg': 'JPG Bild', 
+      'image/jpg': 'JPG Bild',
       'image/png': 'PNG Bild',
       'application/pdf': 'PDF Dokument'
     };
@@ -308,4 +296,43 @@ export class UploadComponent implements OnInit {
       this.fileInput.nativeElement.value = '';
     }
   }
+
+  /**
+   * Handle upload files
+   */
+  async uploadFiles(): Promise<void> {
+    if (this.selectedFiles.length === 0) return;
+
+    this.isUploading = true;
+    this.uploadResults = [];
+    this.uploadProgress = 0;
+    this.errorMessage = '';
+
+    try {
+      for (let i = 0; i < this.selectedFiles.length; i++) {
+        const filePreview = this.selectedFiles[i];
+        
+        // Update progress
+        this.uploadProgress = Math.round(((i + 0.5) / this.selectedFiles.length) * 100);
+        
+        try {
+          const result = await this.uploadService.uploadFile(filePreview.file).toPromise();
+          if (result) {
+            this.uploadResults.push(result);
+          }
+        } catch (error) {
+          this.errorMessage = `Fehler beim Hochladen von ${filePreview.metadata.name}: ${error}`;
+        }
+        
+        // Update progress after each file
+        this.uploadProgress = Math.round(((i + 1) / this.selectedFiles.length) * 100);
+      }
+    } finally {
+      this.isUploading = false;
+    }
+  }
+
+  // Add missing properties
+  uploadResults: UploadResponse[] = [];
+}
 }

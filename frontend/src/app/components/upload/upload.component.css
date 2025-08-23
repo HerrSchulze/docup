@@ -1,101 +1,375 @@
+/* Creditplus.de inspired upload component */
 .upload-container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 20px;
 }
 
+/* Main upload card - Creditplus.de style */
 .card {
   border: none;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  box-shadow: var(--cp-shadow);
+  border-radius: var(--cp-border-radius-lg);
+  background: var(--cp-white);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cp-shadow-hover);
 }
 
 .card-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 10px 10px 0 0 !important;
-  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--cp-primary) 0%, var(--cp-primary-dark) 100%);
+  color: var(--cp-white);
+  border-radius: 0 !important;
+  padding: 2rem;
+  text-align: center;
+  border: none;
 }
 
+.card-header h3 {
+  margin: 0;
+  font-weight: var(--cp-font-weight-bold);
+  font-size: 1.5rem;
+  color: var(--cp-white);
+}
+
+.card-header p {
+  margin: 0.5rem 0 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+/* Creditplus.de style drop zone */
 .drop-zone {
-  border: 3px dashed #ddd;
-  border-radius: 10px;
-  padding: 60px 20px;
+  border: 3px dashed var(--cp-gray-300);
+  border-radius: var(--cp-border-radius-lg);
+  padding: 4rem 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: #fafafa;
+  transition: var(--cp-transition);
+  background: linear-gradient(135deg, var(--cp-white) 0%, var(--cp-primary-light) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-zone::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--cp-primary);
+  opacity: 0;
+  transition: var(--cp-transition);
+  pointer-events: none;
+}
+
+.drop-zone:hover::before,
+.drop-zone.drag-over::before {
+  opacity: 0.05;
 }
 
 .drop-zone:hover,
 .drop-zone.drag-over {
-  border-color: #667eea;
-  background-color: #f0f4ff;
-  transform: translateY(-2px);
+  border-color: var(--cp-primary);
+  transform: translateY(-4px);
+  box-shadow: var(--cp-shadow-hover);
 }
 
 .drop-zone-content {
   pointer-events: none;
+  position: relative;
+  z-index: 1;
 }
 
+.drop-zone-content i {
+  font-size: 4rem;
+  color: var(--cp-primary);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.drop-zone-content h4 {
+  color: var(--cp-primary);
+  font-weight: var(--cp-font-weight-bold);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.drop-zone-content p {
+  color: var(--cp-gray-600);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.drop-zone-content .file-types {
+  color: var(--cp-gray-600);
+  font-size: 0.9rem;
+  font-weight: var(--cp-font-weight-medium);
+}
+
+/* Creditplus.de style camera section */
 .camera-section {
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 1rem;
-  background-color: #f8f9fa;
+  border: 2px solid var(--cp-gray-200);
+  border-radius: var(--cp-border-radius-lg);
+  padding: 1.5rem;
+  background: var(--cp-white);
+  margin: 1.5rem 0;
+  box-shadow: var(--cp-shadow);
+}
+
+.camera-section h5 {
+  color: var(--cp-primary);
+  font-weight: var(--cp-font-weight-bold);
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 .camera-video {
   max-width: 100%;
   height: 300px;
-  border-radius: 10px;
-  background-color: #000;
+  border-radius: var(--cp-border-radius);
+  background-color: var(--cp-gray-800);
+  object-fit: cover;
 }
 
 .camera-controls {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
+/* File preview cards - Creditplus.de style */
 .file-preview-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--cp-gray-200);
+  border-radius: var(--cp-border-radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--cp-white);
+  box-shadow: var(--cp-shadow);
+  transition: var(--cp-transition);
+}
+
+.file-preview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cp-shadow-hover);
+  border-color: var(--cp-primary);
 }
 
 .file-preview-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--cp-gray-200);
 }
 
 .file-name {
-  font-weight: 500;
-  color: #333;
+  font-weight: var(--cp-font-weight-bold);
+  color: var(--cp-primary);
   word-break: break-word;
+  font-size: 1.1rem;
+}
+
+.file-size {
+  color: var(--cp-gray-600);
+  font-weight: var(--cp-font-weight-medium);
+  font-size: 0.9rem;
+}
+
+.file-preview-image {
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
 .file-preview-image img {
-  max-height: 200px;
-  border-radius: 5px;
+  max-height: 250px;
+  max-width: 100%;
+  border-radius: var(--cp-border-radius);
   object-fit: cover;
+  box-shadow: var(--cp-shadow);
 }
 
 .file-preview-pdf {
   text-align: center;
-  padding: 2rem;
-  color: #dc3545;
+  padding: 3rem;
+  color: var(--cp-accent);
+  background: rgba(255, 102, 0, 0.1);
+  border-radius: var(--cp-border-radius);
+  margin-bottom: 1rem;
+}
+
+.file-preview-pdf i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  display: block;
 }
 
 .file-info {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--cp-gray-200);
+}
+
+.file-info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.file-info-label {
+  font-weight: var(--cp-font-weight-medium);
+  color: var(--cp-gray-600);
+}
+
+.file-info-value {
+  color: var(--cp-gray-800);
+  font-weight: var(--cp-font-weight-medium);
+}
+
+/* OCR preview section */
+.ocr-preview {
+  background: var(--cp-primary-light);
+  border: 2px solid var(--cp-primary);
+  border-radius: var(--cp-border-radius);
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.ocr-preview h6 {
+  color: var(--cp-primary);
+  font-weight: var(--cp-font-weight-bold);
+  margin-bottom: 1rem;
+}
+
+.ocr-preview .ocr-text {
+  background: var(--cp-white);
+  border: 1px solid var(--cp-gray-200);
+  border-radius: var(--cp-border-radius);
+  padding: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--cp-gray-800);
+}
+
+/* Progress indicators */
+.upload-progress {
+  margin: 1.5rem 0;
+}
+
+.upload-progress h6 {
+  color: var(--cp-primary);
+  font-weight: var(--cp-font-weight-bold);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.progress {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--cp-gray-200);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, var(--cp-primary) 0%, var(--cp-secondary) 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.upload-status {
+  text-align: center;
+  font-weight: var(--cp-font-weight-medium);
+  color: var(--cp-gray-600);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 0 15px;
+  }
+  
+  .drop-zone {
+    padding: 3rem 1.5rem;
+  }
+  
+  .drop-zone-content i {
+    font-size: 3rem;
+  }
+  
+  .drop-zone-content h4 {
+    font-size: 1.25rem;
+  }
+  
+  .camera-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .file-preview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-header {
+    padding: 1.5rem;
+  }
+  
+  .card-header h3 {
+    font-size: 1.25rem;
+  }
+  
+  .drop-zone {
+    padding: 2rem 1rem;
+  }
+  
+  .drop-zone-content i {
+    font-size: 2.5rem;
+  }
+  
+  .drop-zone-content h4 {
+    font-size: 1.1rem;
+  }
+  
+  .drop-zone-content p {
+    font-size: 1rem;
+  }
 }
 
 .ocr-preview {

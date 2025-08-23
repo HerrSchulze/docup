@@ -50,6 +50,7 @@
           </div>
         </div>
       </div>
+      </div>
 
       <!-- Hidden File Input -->
       <input 
@@ -219,6 +220,95 @@
             <i class="fas fa-redo me-2"></i>Weitere Dateien hochladen
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+                <img [src]="filePreview.preview" alt="Preview" class="img-fluid">
+              </div>
+              
+              <!-- PDF Icon -->
+              <div *ngIf="!filePreview.preview && filePreview.file.type === 'application/pdf'" 
+                   class="file-preview-pdf">
+                <i class="fas fa-file-pdf fa-4x text-danger"></i>
+                <p>PDF Document</p>
+              </div>
+
+              <!-- File Info -->
+              <div class="file-info">
+                <small class="text-muted">
+                  {{ formatFileSize(filePreview.metadata.size) }} • {{ filePreview.metadata.type }}
+                </small>
+              </div>
+
+              <!-- OCR Preview -->
+              <div *ngIf="filePreview.ocrText" class="ocr-preview">
+                <h6>OCR Preview:</h6>
+                <div class="ocr-text">
+                  {{ filePreview.ocrText | slice:0:200 }}
+                  <span *ngIf="filePreview.ocrText.length > 200">...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div *ngIf="isUploading" class="upload-progress mb-4">
+        <h5>{{ uploadProgress.message }}</h5>
+        <div class="progress mb-2">
+          <div 
+            class="progress-bar progress-bar-striped progress-bar-animated"
+            [class.bg-success]="uploadProgress.status === 'completed'"
+            [class.bg-primary]="uploadProgress.status === 'uploading'"
+            [class.bg-warning]="uploadProgress.status === 'processing'"
+            [style.width.%]="uploadProgress.progress">
+          </div>
+        </div>
+        <small class="text-muted">{{ uploadProgress.progress }}% complete</small>
+      </div>
+
+      <!-- Upload Result -->
+      <div *ngIf="uploadResult" class="upload-result">
+        <div class="alert alert-success">
+          <h5><i class="fas fa-check-circle"></i> Upload Successful!</h5>
+          <div class="result-details">
+            <p><strong>Filename:</strong> {{ uploadResult.filename }}</p>
+            <p><strong>Size:</strong> {{ formatFileSize(uploadResult.size) }}</p>
+            <p><strong>Type:</strong> {{ uploadResult.mimeType }}</p>
+            <p><strong>Uploaded:</strong> {{ uploadResult.uploadedAt | date:'medium' }}</p>
+            <p><strong>Virus Scan:</strong> 
+              <span [class]="uploadResult.virusScanPassed ? 'text-success' : 'text-danger'">
+                {{ uploadResult.virusScanPassed ? '✓ Passed' : '✗ Failed' }}
+              </span>
+            </p>
+            
+            <!-- OCR Results -->
+            <div *ngIf="uploadResult.ocrText" class="ocr-results mt-3">
+              <h6>Extracted Text:</h6>
+              <div class="ocr-text-result">
+                {{ uploadResult.ocrText }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button 
+          *ngIf="selectedFiles.length > 0 && !isUploading"
+          class="btn btn-primary btn-lg me-2"
+          (click)="uploadFiles()">
+          <i class="fas fa-upload"></i> Upload Files
+        </button>
+        
+        <button 
+          class="btn btn-outline-secondary"
+          (click)="clearAll()">
+          <i class="fas fa-refresh"></i> Clear All
+        </button>
       </div>
     </div>
   </div>

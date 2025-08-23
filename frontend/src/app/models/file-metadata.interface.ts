@@ -2,12 +2,12 @@ export interface FileMetadata {
   name: string;
   size: number;
   type: string;
-  lastModified: number;
+  lastModified: Date;
 }
 
 export interface FilePreview {
   file: File;
-  preview: string;
+  preview?: string;
   metadata: FileMetadata;
   ocrText?: string;
 }
