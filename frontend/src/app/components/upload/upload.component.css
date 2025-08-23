@@ -494,3 +494,122 @@
     background-position: 0 0;
   }
 }
+
+/* Enhanced Progress Feedback */
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progress-percentage {
+  font-weight: var(--cp-font-weight-bold);
+  font-size: 1.2rem;
+  color: var(--cp-primary);
+}
+
+.progress-bar-preparing {
+  background: linear-gradient(90deg, var(--cp-gray-400), var(--cp-gray-500));
+}
+
+.progress-bar-uploading {
+  background: linear-gradient(90deg, var(--cp-primary-400), var(--cp-primary-600));
+}
+
+.progress-bar-virus-scan {
+  background: linear-gradient(90deg, var(--cp-warning-400), var(--cp-warning-600));
+}
+
+.progress-bar-ocr-processing {
+  background: linear-gradient(90deg, var(--cp-success-400), var(--cp-success-600));
+}
+
+.progress-bar-complete {
+  background: linear-gradient(90deg, var(--cp-success-500), var(--cp-success-700));
+}
+
+.progress-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.progress-message {
+  color: var(--cp-gray-700);
+  font-weight: var(--cp-font-weight-medium);
+}
+
+.time-remaining {
+  color: var(--cp-gray-600);
+  font-style: italic;
+}
+
+/* Phase Indicators */
+.phase-indicators {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.phase {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  border-radius: var(--cp-border-radius);
+  font-size: 0.8rem;
+  transition: var(--cp-transition);
+  background-color: var(--cp-gray-100);
+  color: var(--cp-gray-500);
+  text-align: center;
+}
+
+.phase i {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.phase.active {
+  background-color: var(--cp-primary-100);
+  color: var(--cp-primary-700);
+  transform: scale(1.05);
+}
+
+.phase.complete {
+  background-color: var(--cp-success-100);
+  color: var(--cp-success-700);
+}
+
+/* Mobile optimizations for enhanced progress */
+@media (max-width: 768px) {
+  .progress-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .phase {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .phase i {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .phase-indicators {
+    flex-wrap: wrap;
+  }
+  
+  .phase {
+    flex: 1 1 calc(50% - 0.25rem);
+    margin-bottom: 0.5rem;
+  }
+}

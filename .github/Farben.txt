@@ -1,0 +1,164 @@
+Farben
+
+Das Creditplus Farbsystem nutzt die Beziehungen zwischen Farben und ihren Eigenschaften, um eine skalierbare Grundlage für Farben im
+Designsystem zu schaffen.
+
+Grundlagen
+Farben im UI-Design können auf eine Art und Weise sprechen, die genauso aussagekräftig ist wie Texte. Sie haben nicht nur Einfluss darauf, wie das
+Design aussieht, sondern können sogar Emotionen hervorrufen und die Persönlichkeit einer Marke widerspiegeln. Farben spielen auch eine wichtige Rolle
+für das "Look & Feel" des Designs und sind der erste Eindruck.
+Obwohl Farben eher subjektiv wahrgenommen werden, können richtige Farben den Nutzer positiv beeinflussen. Schlechte Farben hingegen können die
+Nutzer abschrecken und das Design sogar unzugänglich und unbrauchbar machen.
+
+Farb-Paletten
+Grays
+Grau ist eine neutrale Farbe und bildet die Grundlage des Farbsystems. Fast alles im UI-Design - Text, Formularfelder, Hintergründe, Trennlinien - ist
+normalerweise grau.
+
+Primary colors
+Die Primärfarbe entspricht der "Markenfarbe" und wird für alle interaktiven Elemente wie Buttons, Links, Eingaben usw. verwendet. Diese Farbe kann den
+Gesamteindruck bestimmen und Emotionen hervorrufen. Zudem wird die Primärfarbe im B2C-Bereich teilweise als Hintergrundfarbe eingesetzt.
+
+Secondary Colors (Brand colors)
+
+Zusätzlich zur Grundfarbe cyan bietet das Creditplus Farbsystem auch noch zwei weitere Farben an. Rot und Dunkelgrün werden ergänzend als
+Sekundärfarben eingesetzt. Dunkelgrün wird hauptsächlich im B2B-Bereich für vollflächige Hintergründe verwendet, kann jedoch im B2C-Bereich als
+Schriftfarbe oder für dezente Details genutzt werden. Rot wird sehr sparsam eingesetzt und ausschließlich, um auf wichtige Elemente aufmerksam zu
+machen. Diese gezielte Farbverwendung sorgt für ein klares und einheitliches Design in verschiedenen Kontexten.
+
+Accent colors
+Diese fungieren als "sekundäre" oder "unterstützende" Farben zu Ihrer Primärfarbe. Sie sind nützlich, um die Aufmerksamkeit auf sich zu ziehen oder um
+Ihre Primär-/Markenfarbe zu unterstützen. Sie sind auch für Komponenten wie Tags und Abzeichen nützlich.
+Diese Farbe wird im digitalen Bereich bspw. für den Chatbot verwendet.
+
+Functional Colors
+Funktionsfarben dienen dazu, spezifische Statusmeldungen klar und effektiv zu kommunizieren. Die Farbpalette für Alerts verwendet Orangetöne, die
+genutzt werden, um wichtige Hinweise oder Warnungen hervorzuheben. Für positive Rückmeldungen, wie etwa den erfolgreichen Abschluss einer Aktion,
+kommen Grüntöne aus der Success-Palette zum Einsatz. Rot wird bewusst nicht als Alert Color verwendet, da es im Styleguide als Secondary Color
+definiert ist und für spezielle Elemente vorbehalten bleibt. Diese klare Trennung der Farbrollen gewährleistet Konsistenz und eine intuitive Nutzererfahrung.
+
+Grays
+Vorschau
+
+Bezeichnung
+
+Usage / Nutzung
+
+HEX-Wert
+
+Gray 50
+
+Background Layer 1
+
+#ffffff
+
+Gray 75
+
+Background Layer 2
+
+#fdfdfd
+
+Gray 100
+
+Base BG
+
+#f8f8f8
+
+Gray 200
+
+#e6e6e6
+
+Gray 300
+
+#d5d5d5
+
+Gray 400
+
+#b1b1b1
+
+Gray 500
+
+Disabled Text
+
+#909090
+
+Gray 600
+
+Placeholder Text
+
+#6d6d6d
+
+Gray 700
+
+Text Content
+
+#464646
+
+Gray 800
+
+Text Content
+
+#222222
+
+Gray 900
+
+Text Content
+
+#000000
+
+Primary Colors
+Vorschau
+
+Bezeichnung
+
+Usage / Nutzung
+
+HEX-Wert
+
+Primary 50
+
+#F2FEFF
+
+Primary 75
+
+#D6F8FB
+
+Primary 100
+
+#BAF3F7
+
+Primary 200
+
+#85E9EF
+
+Primary 300
+
+#58DEE6
+
+Primary 400
+
+#36D1DA
+
+Primary 500
+
+#1FC1CA
+
+Primary 600
+
+Primary 700
+
+Base Brand Color
+
+#1AAEB7
+
+#109BAA
+
+Primary 800
+
+#078699
+
+Primary 900
+
+#007187
+
+
