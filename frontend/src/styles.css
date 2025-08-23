@@ -1,19 +1,90 @@
 /* Global Styles - Creditplus.de Inspired */
 :root {
-  /* Creditplus.de Color Palette */
-  --cp-primary: #0066cc;        /* Main blue */
-  --cp-primary-dark: #004499;   /* Darker blue for hover */
-  --cp-primary-light: #e6f2ff; /* Light blue background */
-  --cp-secondary: #00cc66;      /* Success green */
-  --cp-accent: #ff6600;         /* Orange accent */
-  --cp-gray-100: #f8f9fa;      /* Light gray background */
-  --cp-gray-200: #e9ecef;      /* Border gray */
-  --cp-gray-300: #dee2e6;      /* Divider gray */
-  --cp-gray-600: #6c757d;      /* Text gray */
-  --cp-gray-800: #343a40;      /* Dark text */
-  --cp-white: #ffffff;
-  --cp-shadow: 0 2px 8px rgba(0, 102, 204, 0.15);
-  --cp-shadow-hover: 0 4px 16px rgba(0, 102, 204, 0.25);
+  /* Primary Colors - Creditplus Cyan/Turquoise */
+  --cp-primary-50: #F2FEFF;
+  --cp-primary-75: #D6F8FB;
+  --cp-primary-100: #BAF3F7;
+  --cp-primary-200: #85E9EF;
+  --cp-primary-300: #58DEE6;
+  --cp-primary-400: #36D1DA;
+  --cp-primary-500: #1FC1CA;
+  --cp-primary-600: #1AAEB7;
+  --cp-primary-700: #109BAA;
+  --cp-primary-800: #078699;
+  --cp-primary-900: #007187;
+
+  /* Grays - Creditplus Neutral Scale */
+  --cp-gray-50: #ffffff;
+  --cp-gray-75: #fdfdfd;
+  --cp-gray-100: #f8f8f8;
+  --cp-gray-200: #e6e6e6;
+  --cp-gray-300: #d5d5d5;
+  --cp-gray-400: #b1b1b1;
+  --cp-gray-500: #909090;
+  --cp-gray-600: #6d6d6d;
+  --cp-gray-700: #464646;
+  --cp-gray-800: #222222;
+  --cp-gray-900: #000000;
+
+  /* Secondary Colors - Brand Colors (Red/Green) */
+  --cp-secondary-red: #cc0000; /* Based on brand secondary red */
+  --cp-secondary-green: #006633; /* Based on brand secondary dark green */
+
+  /* Functional Colors */
+  --cp-success-50: #e6fff2;
+  --cp-success-100: #b3ffdb;
+  --cp-success-200: #80ffc4;
+  --cp-success-300: #4dffad;
+  --cp-success-400: #1aff96;
+  --cp-success-500: #00cc66;
+  --cp-success-600: #00a352;
+  --cp-success-700: #007a3d;
+  --cp-success-800: #005229;
+  --cp-success-900: #002914;
+
+  /* Warning/Alert Colors - Orange (for alerts and notifications) */
+  --cp-warning-50: #fff8e6;
+  --cp-warning-100: #ffecb3;
+  --cp-warning-200: #ffe080;
+  --cp-warning-300: #ffd44d;
+  --cp-warning-400: #ffc81a;
+  --cp-warning-500: #ff9900;
+  --cp-warning-600: #cc7700;
+  --cp-warning-700: #995900;
+  --cp-warning-800: #663b00;
+  --cp-warning-900: #331d00;
+
+  /* Text Colors using Creditplus specifications */
+  --text-primary: var(--cp-gray-900);
+  --text-secondary: var(--cp-gray-700);
+  --text-muted: var(--cp-gray-600);
+  --text-disabled: var(--cp-gray-500);
+  --text-placeholder: var(--cp-gray-600);
+
+  /* Background Colors */
+  --bg-primary: var(--cp-gray-50);
+  --bg-secondary: var(--cp-gray-75);
+  --bg-tertiary: var(--cp-gray-100);
+  --bg-accent: var(--cp-primary-50);
+
+  /* Border Colors */
+  --border-light: var(--cp-gray-200);
+  --border-medium: var(--cp-gray-300);
+  --border-dark: var(--cp-gray-400);
+
+  /* Brand Colors using official Creditplus specifications */
+  --cp-primary: var(--cp-primary-600); /* Main Creditplus brand color #1AAEB7 */
+  --cp-primary-light: var(--cp-primary-400);
+  --cp-primary-dark: var(--cp-primary-700);
+  --cp-secondary: var(--cp-success-500);
+  --cp-accent: var(--cp-warning-500);
+  --cp-white: var(--cp-gray-50);
+  --cp-black: var(--cp-gray-900);
+
+  /* Shadows */
+  --cp-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --cp-shadow-hover: 0 4px 16px rgba(26, 174, 183, 0.2); /* Using primary color for hover shadows */
+  --cp-shadow-focus: 0 0 0 3px rgba(26, 174, 183, 0.2);
   
   /* Typography */
   --cp-font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
