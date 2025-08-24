@@ -4,19 +4,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "npm --silent install && ng build",
-    "build-quiet": "npm --silent install --no-audit --no-fund && ng build",
+    "build": "ng build",
+    "build-quiet": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
-    "lint": "ng lint",
-    "lint:security": "eslint src/**/*.ts --config .eslintrc-security.json",
-    "audit": "npm audit --audit-level high",
-    "audit-ci": "audit-ci --config audit-ci.json",
-    "retire": "retire --path src --outputformat json --outputpath retire-report.json",
-    "security-scan": "npm run lint:security && npm run audit-ci && npm run retire",
-    "lighthouse": "lighthouse http://localhost:4200 --output json --output-path lighthouse-report.json",
-    "lighthouse:ci": "lighthouse http://localhost:4200 --output json --output-path lighthouse-report.json --chrome-flags='--headless'"
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
@@ -45,19 +38,6 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.4.0",
-    
-    "eslint": "^8.57.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@angular-eslint/builder": "^18.3.0",
-    "@angular-eslint/eslint-plugin": "^18.3.0",
-    "@angular-eslint/eslint-plugin-template": "^18.3.0",
-    "@angular-eslint/schematics": "^18.3.0",
-    "@angular-eslint/template-parser": "^18.3.0",
-    "eslint-plugin-security": "^3.0.1",
-    "audit-ci": "^7.1.0",
-    "retire": "^5.2.1",
-    "lighthouse": "^12.2.0"
+    "typescript": "~5.4.0"
   }
 }

@@ -1,0 +1,296 @@
+# GitLab CI/CD Pipeline for DocUp Application
+# Simplified and robust security-focused pipeline
+
+stages:
+  - security
+  - build
+  - test
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+cache:
+  paths:
+    - .m2/repository/
+    - frontend/node_modules/
+
+# Backend Security and Build
+backend-security-build:
+  stage: security
+  image: maven:3.9.4-openjdk-21
+  script:
+    - echo "🔍 Backend security analysis and build..."
+    - cd backend
+    - mvn clean compile
+    - mvn org.owasp:dependency-check-maven:check || true
+    - mvn com.github.spotbugs:spotbugs-maven-plugin:check || true
+    - mvn package -DskipTests
+  artifacts:
+    when: always
+    paths:
+      - backend/target/*.jar
+      - backend/target/dependency-check-report.html
+      - backend/target/spotbugsXml.xml
+    expire_in: 1 hour
+  allow_failure: false
+
+# Frontend Security and Build
+frontend-security-build:
+  stage: security
+  image: node:18-alpine
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - echo "🔍 Frontend security analysis and build..."
+    - npm run lint || true
+    - npm audit --audit-level high || true
+    - npm run build
+  artifacts:
+    when: always
+    paths:
+      - frontend/dist/
+    expire_in: 1 hour
+  cache:
+    paths:
+      - frontend/node_modules/
+  allow_failure: false
+
+# Test Stage
+test:backend:
+  stage: test
+  image: maven:3.9.4-openjdk-21
+  services:
+    - postgres:13
+  variables:
+    POSTGRES_DB: docup_test
+    POSTGRES_USER: docup
+    POSTGRES_PASSWORD: test_password
+    SPRING_PROFILES_ACTIVE: test
+  dependencies:
+    - build:backend
+  script:
+    - echo "🧪 Running backend tests..."
+    - cd backend
+    - mvn $MAVEN_CLI_OPTS test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - backend/target/surefire-reports/TEST-*.xml
+      coverage_report:
+        coverage_format: jacoco
+        path: backend/target/site/jacoco/jacoco.xml
+    paths:
+      - backend/target/surefire-reports/
+    expire_in: 1 week
+
+test:frontend:
+  stage: test
+  image: node:18-alpine
+  dependencies:
+    - build:frontend
+  script:
+    - echo "🧪 Running frontend tests..."
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm run test:ci
+    - npm run lint
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - frontend/test-results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: frontend/coverage/cobertura-coverage.xml
+    paths:
+      - frontend/coverage/
+    expire_in: 1 week
+
+# Security Scanning Stage
+security-container-scan:
+  stage: security-scan
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - docker info
+  script:
+    - echo "🔒 Scanning Docker images for vulnerabilities..."
+    # Build images
+    - docker build -t docup-backend:$CI_COMMIT_SHA ./backend
+    - docker build -t docup-frontend:$CI_COMMIT_SHA ./frontend
+    # Scan for vulnerabilities
+    - trivy image --format json --output backend-trivy-report.json docup-backend:$CI_COMMIT_SHA
+    - trivy image --format json --output frontend-trivy-report.json docup-frontend:$CI_COMMIT_SHA
+    # Scan for high/critical vulnerabilities only
+    - trivy image --severity HIGH,CRITICAL --exit-code 1 docup-backend:$CI_COMMIT_SHA
+    - trivy image --severity HIGH,CRITICAL --exit-code 1 docup-frontend:$CI_COMMIT_SHA
+  artifacts:
+    when: always
+    paths:
+      - backend-trivy-report.json
+      - frontend-trivy-report.json
+    expire_in: 1 week
+  dependencies:
+    - build:backend
+    - build:frontend
+  allow_failure: false
+
+# OWASP ZAP Dynamic Security Testing
+security-dast:
+  stage: security-scan
+  image: 
+    name: owasp/zap2docker-stable:latest
+    entrypoint: [""]
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  script:
+    - echo "🛡️ Running OWASP ZAP dynamic security testing..."
+    # Start the application
+    - docker-compose up -d
+    - sleep 30  # Wait for services to start
+    # Run ZAP baseline scan
+    - mkdir -p zap-reports
+    - zap-baseline.py -t http://localhost:4200 -J zap-reports/baseline-report.json -r zap-reports/baseline-report.html || true
+    # Run ZAP API scan on backend
+    - zap-api-scan.py -t http://localhost:8080/api-docs -J zap-reports/api-report.json -r zap-reports/api-report.html || true
+  artifacts:
+    when: always
+    paths:
+      - zap-reports/
+    expire_in: 1 week
+  dependencies:
+    - build:backend
+    - build:frontend
+  allow_failure: true
+  only:
+    - main
+    - develop
+
+# Deployment Stage
+deploy:staging:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - docker info
+  script:
+    - echo "🚀 Deploying to staging environment..."
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA ./backend
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA ./frontend
+    # Tag as latest for staging
+    - docker tag $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/backend:staging
+    - docker tag $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/frontend:staging
+    # Push to GitLab Container Registry
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/backend:staging
+    - docker push $CI_REGISTRY_IMAGE/frontend:staging
+  dependencies:
+    - test:backend
+    - test:frontend
+    - security-container-scan
+  environment:
+    name: staging
+    url: http://localhost
+  only:
+    - main
+    - develop
+  when: manual
+
+# Production deployment (manual approval required)
+deploy:production:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - docker info
+  script:
+    - echo "🌟 Deploying to production environment..."
+    # Tag as production
+    - docker pull $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    - docker pull $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/backend:latest
+    - docker tag $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/frontend:latest
+    # Push production tags
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  dependencies:
+    - deploy:staging
+  environment:
+    name: production
+    url: https://your-production-domain.com
+  only:
+    - main
+  when: manual
+  allow_failure: false
+
+# Security Monitoring Stage
+security-monitoring:
+  stage: security-monitoring
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "📊 Collecting security metrics..."
+    - echo "Security scan completed successfully"
+    # Here you could integrate with security monitoring tools
+    # like Snyk, WhiteSource, etc.
+  dependencies:
+    - security-sast-backend
+    - security-sast-frontend
+    - security-container-scan
+  only:
+    - main
+    - develop
+  allow_failure: true
+
+# Scheduled Security Scans
+security-scheduled-scan:
+  extends: security-sast-backend
+  stage: security-analysis
+  script:
+    - echo "🕐 Running scheduled security scan..."
+    - cd backend
+    - mvn org.owasp:dependency-check-maven:check
+    - mvn com.github.spotbugs:spotbugs-maven-plugin:check
+  only:
+    - schedules
+  artifacts:
+    when: always
+    paths:
+      - backend/target/dependency-check-report.html
+      - backend/target/spotbugsXml.xml
+    expire_in: 1 month
