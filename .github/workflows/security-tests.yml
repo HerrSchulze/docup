@@ -34,6 +34,9 @@ jobs:
     - name: Run Backend Security Tests
       run: ./scripts/security-test-backend.sh
       working-directory: ./
+      env:
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        MAVEN_OPTS: "-Dnvd.api.key=${{ secrets.NVD_API_KEY }}"
       
     - name: Upload OWASP Report
       uses: actions/upload-artifact@v4

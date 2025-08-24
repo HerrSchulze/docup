@@ -80,6 +80,16 @@
                     </suppressionFiles>
                     <format>ALL</format>
                     <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                    <!-- Configuration for CI/CD environments -->
+                    <nvdValidForHours>24</nvdValidForHours>
+                    <skipOnFailure>false</skipOnFailure>
+                    <autoUpdate>true</autoUpdate>
+                    <!-- Fallback when NVD API is unavailable -->
+                    <enableRetired>false</enableRetired>
+                    <enableExperimental>false</enableExperimental>
+                    <!-- Timeout settings for better CI/CD reliability -->
+                    <connectionTimeout>60000</connectionTimeout>
+                    <readTimeout>60000</readTimeout>
                 </configuration>
                 <executions>
                     <execution>
