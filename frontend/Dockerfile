@@ -1,19 +1,19 @@
 # Build stage
-FROM node:24-alpine as build
+FROM node:18-alpine as build
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with legacy peer deps
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build --configuration=production
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
