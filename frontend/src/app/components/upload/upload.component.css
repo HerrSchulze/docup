@@ -496,6 +496,15 @@
 }
 
 /* Enhanced Progress Feedback */
+.upload-progress {
+  background: var(--cp-white);
+  border-radius: var(--cp-border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--cp-shadow);
+  margin: 1.5rem 0;
+  border: 1px solid var(--cp-gray-200);
+}
+
 .progress-header {
   display: flex;
   justify-content: space-between;
@@ -587,29 +596,129 @@
 
 /* Mobile optimizations for enhanced progress */
 @media (max-width: 768px) {
+  .upload-container {
+    padding: 0 10px;
+  }
+  
+  .progress-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .progress-header h6 {
+    font-size: 1rem;
+    margin: 0;
+  }
+  
+  .progress-percentage {
+    font-size: 1.5rem;
+  }
+  
   .progress-details {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .progress-message, .time-remaining {
+    font-size: 0.95rem;
   }
   
   .phase {
     font-size: 0.7rem;
-    padding: 0.5rem 0.25rem;
+    padding: 0.6rem 0.3rem;
   }
   
   .phase i {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .phase span {
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 576px) {
+  .upload-container {
+    padding: 0 5px;
+  }
+  
+  .progress-header h6 {
+    font-size: 0.9rem;
+  }
+  
+  .progress-percentage {
+    font-size: 1.3rem;
+  }
+  
+  .progress-details {
+    margin-bottom: 1rem;
+  }
+  
+  .progress-message, .time-remaining {
+    font-size: 0.85rem;
+  }
+  
+  .phase-indicators {
+    gap: 0.25rem;
+  }
+  
+  .phase {
+    font-size: 0.65rem;
+    padding: 0.5rem 0.2rem;
+  }
+  
+  .phase i {
+    font-size: 1.1rem;
   }
 }
 
 @media (max-width: 480px) {
   .phase-indicators {
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
   }
   
   .phase {
-    flex: 1 1 calc(50% - 0.25rem);
+    flex: 0 0 calc(50% - 0.25rem);
+    max-width: calc(50% - 0.25rem);
     margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .upload-container {
+    padding: 0;
+  }
+  
+  .card {
+    margin: 0 5px 1rem 5px;
+  }
+  
+  .progress-header h6 {
+    font-size: 0.8rem;
+  }
+  
+  .progress-percentage {
+    font-size: 1.2rem;
+  }
+  
+  .phase {
+    font-size: 0.6rem;
+    padding: 0.4rem 0.1rem;
+  }
+  
+  .phase i {
+    font-size: 1rem;
+  }
+  
+  .phase span {
+    word-break: break-word;
   }
 }

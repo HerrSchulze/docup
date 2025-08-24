@@ -175,31 +175,47 @@
         
         <div class="progress-details">
           <div class="progress-message">
-            <i class="fas fa-info-circle me-1"></i>
-            {{ currentProgressMessage || 'Verarbeitung läuft...' }}
+            <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
+            <span>{{ currentProgressMessage || 'Verarbeitung läuft...' }}</span>
           </div>
           <div *ngIf="estimatedTimeRemaining" class="time-remaining">
-            <i class="fas fa-clock me-1"></i>
-            Noch ca. {{ formatTime(estimatedTimeRemaining) }}
+            <i class="fas fa-clock me-1" aria-hidden="true"></i>
+            <span>Noch ca. {{ formatTime(estimatedTimeRemaining) }}</span>
           </div>
         </div>
         
         <!-- Phase Indicators -->
-        <div class="phase-indicators mt-3">
-          <div class="phase" [class.active]="currentProgressPhase === 'preparing'" [class.complete]="uploadProgress > 5">
-            <i class="fas fa-cog"></i>
+        <div class="phase-indicators mt-3" role="progressbar" 
+             [attr.aria-label]="'Upload Phase: ' + currentProgressPhase"
+             [attr.aria-valuenow]="uploadProgress"
+             aria-valuemin="0" 
+             aria-valuemax="100">
+          <div class="phase" 
+               [class.active]="currentProgressPhase === 'preparing'" 
+               [class.complete]="uploadProgress > 5"
+               [attr.aria-current]="currentProgressPhase === 'preparing' ? 'step' : null">
+            <i class="fas fa-cog" aria-hidden="true"></i>
             <span>Vorbereitung</span>
           </div>
-          <div class="phase" [class.active]="currentProgressPhase === 'uploading'" [class.complete]="uploadProgress > 30">
-            <i class="fas fa-cloud-upload-alt"></i>
+          <div class="phase" 
+               [class.active]="currentProgressPhase === 'uploading'" 
+               [class.complete]="uploadProgress > 30"
+               [attr.aria-current]="currentProgressPhase === 'uploading' ? 'step' : null">
+            <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
             <span>Upload</span>
           </div>
-          <div class="phase" [class.active]="currentProgressPhase === 'virus-scan'" [class.complete]="uploadProgress > 50">
-            <i class="fas fa-shield-alt"></i>
+          <div class="phase" 
+               [class.active]="currentProgressPhase === 'virus-scan'" 
+               [class.complete]="uploadProgress > 50"
+               [attr.aria-current]="currentProgressPhase === 'virus-scan' ? 'step' : null">
+            <i class="fas fa-shield-alt" aria-hidden="true"></i>
             <span>Virenprüfung</span>
           </div>
-          <div class="phase" [class.active]="currentProgressPhase === 'ocr-processing'" [class.complete]="uploadProgress >= 100">
-            <i class="fas fa-eye"></i>
+          <div class="phase" 
+               [class.active]="currentProgressPhase === 'ocr-processing'" 
+               [class.complete]="uploadProgress >= 100"
+               [attr.aria-current]="currentProgressPhase === 'ocr-processing' ? 'step' : null">
+            <i class="fas fa-eye" aria-hidden="true"></i>
             <span>Texterkennung</span>
           </div>
         </div>

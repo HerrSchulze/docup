@@ -177,7 +177,7 @@ public class OcrService {
     private String extractTextFromPdf(MultipartFile file) throws IOException, TesseractException {
         logger.debug("Extracting text from PDF: {}", file.getOriginalFilename());
         
-        try (PDDocument document = PDDocument.load(new ByteArrayInputStream(file.getBytes()))) {
+        try (PDDocument document = org.apache.pdfbox.Loader.loadPDF(file.getBytes())) {
             if (document.getNumberOfPages() == 0) {
                 return "";
             }

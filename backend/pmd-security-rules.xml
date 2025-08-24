@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Custom Security Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>Security-focused PMD rules for DocUp application</description>
+
+    <!-- Security rules -->
+    <rule ref="category/java/security.xml"/>
+    
+    <!-- Additional security-related rules from other categories -->
+    <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace"/>
+    <rule ref="category/java/bestpractices.xml/SystemPrintln"/>
+    <rule ref="category/java/bestpractices.xml/UseVarargs"/>
+    
+    <!-- Error handling -->
+    <rule ref="category/java/errorprone.xml/AvoidCatchingThrowable"/>
+    <rule ref="category/java/errorprone.xml/AvoidLosingExceptionInformation"/>
+    <rule ref="category/java/errorprone.xml/DoNotThrowExceptionInFinally"/>
+    
+    <!-- Custom rules for file handling security -->
+    <rule name="SecureFileHandling"
+          language="java"
+          message="File operations should validate paths to prevent directory traversal"
+          class="net.sourceforge.pmd.lang.rule.XPathRule">
+        <description>
+            Detects potentially unsafe file operations that could lead to path traversal vulnerabilities
+        </description>
+        <priority>2</priority>
+        <properties>
+            <property name="xpath">
+                <value>
+                    //PrimaryExpression[
+                        PrimaryPrefix/Name[
+                            @Image='File' or 
+                            @Image='FileInputStream' or 
+                            @Image='FileOutputStream' or
+                            @Image='FileReader' or
+                            @Image='FileWriter'
+                        ]
+                    ]
+                </value>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

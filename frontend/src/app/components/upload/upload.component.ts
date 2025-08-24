@@ -165,43 +165,52 @@ export class UploadComponent implements OnInit {
    */
   async uploadFiles(): Promise<void> {
     if (this.selectedFiles.length === 0) return;
-
+    
     this.isUploading = true;
     this.uploadResults = [];
     this.uploadProgress = 0;
     this.errorMessage = '';
+    this.currentProgressStatus = '';
+    this.currentProgressMessage = '';
 
     try {
       for (let i = 0; i < this.selectedFiles.length; i++) {
         const filePreview = this.selectedFiles[i];
         
-        // Update progress
-        this.uploadProgress = Math.round(((i + 0.5) / this.selectedFiles.length) * 100);
+        // Reset progress for each file
+        this.uploadProgress = 0;
+        this.currentProgressStatus = '';
+        this.currentProgressMessage = `Verarbeite Datei ${i + 1} von ${this.selectedFiles.length}: ${filePreview.metadata.name}`;
         
         try {
-          this.uploadService.uploadFile(filePreview.file).subscribe({
-            next: (response: any) => {
-              if (response && 'filename' in response) {
-                this.uploadResults.push(response as UploadResponse);
+          // Upload file and get result
+          const response = await new Promise<UploadResponse>((resolve, reject) => {
+            this.uploadService.uploadFile(filePreview.file).subscribe({
+              next: (response: UploadResponse) => {
+                resolve(response);
+              },
+              error: (error: any) => {
+                reject(error);
               }
-            },
-            error: (error: any) => {
-              this.errorMessage = `Fehler beim Hochladen von ${filePreview.metadata.name}: ${error}`;
-            }
+            });
           });
+          
+          this.uploadResults.push(response);
+          
         } catch (error) {
+          console.error('Upload error:', error);
           this.errorMessage = `Fehler beim Hochladen von ${filePreview.metadata.name}: ${error}`;
         }
-        
-        // Update progress after each file
-        this.uploadProgress = Math.round(((i + 1) / this.selectedFiles.length) * 100);
       }
+      
+      // All files completed
+      this.currentProgressStatus = 'Abgeschlossen';
+      this.currentProgressMessage = `${this.uploadResults.length} von ${this.selectedFiles.length} Dateien erfolgreich verarbeitet`;
+      
     } finally {
       this.isUploading = false;
     }
-  }
-
-  /**
+  }  /**
    * Start camera (mock implementation)
    */
   async startCamera(): Promise<void> {
