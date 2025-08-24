@@ -12,8 +12,8 @@ echo "=================================================="
 cd "$(dirname "$0")/../backend"
 
 echo "📦 Installing/updating security testing tools..."
-# Update Maven dependencies for security tools
-mvn dependency:resolve-sources
+# Download source attachments for security tools (optional)
+mvn dependency:sources || echo "⚠️ Some source attachments may not be available"
 
 echo ""
 echo "🔍 1. OWASP Dependency Check - Scanning for vulnerable dependencies..."
