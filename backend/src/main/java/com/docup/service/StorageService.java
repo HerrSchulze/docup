@@ -3,6 +3,7 @@ package com.docup.service;
 import com.docup.config.FileStorageConfig;
 import com.docup.exception.FileStorageException;
 import com.docup.model.FileMetadata;
+import com.docup.util.SecurityUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +37,26 @@ public class StorageService {
     @Autowired
     public StorageService(FileStorageConfig config) {
         this.config = config;
-        this.uploadPath = Paths.get(config.getPath()).toAbsolutePath().normalize();
+        // Validate and normalize the upload path to prevent path traversal
+        String configPath = config.getPath();
+        if (configPath == null || configPath.trim().isEmpty()) {
+            throw new IllegalArgumentException("Upload path cannot be null or empty");
+        }
+        this.uploadPath = Paths.get(configPath).toAbsolutePath().normalize();
+        // Additional security check to ensure path is within expected boundaries
+        validateUploadPath(this.uploadPath);
         initializeStorage();
+    }
+    
+    /**
+     * Validate that the upload path is secure and within expected boundaries.
+     */
+    private void validateUploadPath(Path path) {
+        // Ensure the path doesn't contain suspicious patterns
+        String pathStr = path.toString();
+        if (pathStr.contains("..") || pathStr.contains("~")) {
+            throw new SecurityException("Invalid upload path detected: " + pathStr);
+        }
     }
     
     /**
@@ -46,11 +65,11 @@ public class StorageService {
     private void initializeStorage() {
         try {
             Files.createDirectories(uploadPath);
-            logger.info("Storage initialized at: {}", uploadPath);
+            logger.info("Storage initialized at: {}", SecurityUtil.sanitizeForLog(uploadPath));
             logger.debug("Storage directory permissions: readable={}, writable={}", 
                         Files.isReadable(uploadPath), Files.isWritable(uploadPath));
         } catch (IOException e) {
-            logger.error("Failed to initialize storage directory: {}", uploadPath, e);
+            logger.error("Failed to initialize storage directory: {}", SecurityUtil.sanitizeForLog(uploadPath), e);
             throw new FileStorageException("Could not create upload directory", e);
         }
     }
@@ -119,10 +138,13 @@ public class StorageService {
             throw new FileStorageException("File size exceeds maximum allowed size");
         }
         
-        String extension = FilenameUtils.getExtension(file.getOriginalFilename()).toLowerCase();
+        // Use secure filename processing with null byte validation
+        String originalFilename = file.getOriginalFilename();
+        SecurityUtil.validateNoNullBytes(originalFilename);
+        String extension = getSecureFileExtension(originalFilename).toLowerCase();
         if (!config.getAllowedTypes().contains(extension)) {
             logger.warn("Validation failed: File type '{}' not in allowed types: {}", 
-                       extension, config.getAllowedTypes());
+                       SecurityUtil.sanitizeForLog(extension), config.getAllowedTypes());
             throw new FileStorageException("File type not allowed: " + extension);
         }
         
@@ -139,11 +161,46 @@ public class StorageService {
      * Generate unique filename with UUID prefix.
      */
     private String generateStoredFilename(String originalFilename) {
-        String extension = FilenameUtils.getExtension(originalFilename);
-        String baseName = FilenameUtils.getBaseName(originalFilename);
+        SecurityUtil.validateNoNullBytes(originalFilename);
+        String extension = getSecureFileExtension(originalFilename);
+        String baseName = getSecureBaseName(originalFilename);
         String uuid = UUID.randomUUID().toString();
         
         return String.format("%s_%s.%s", uuid, baseName, extension);
+    }
+    
+    /**
+     * Securely extract file extension without null byte vulnerabilities.
+     */
+    private String getSecureFileExtension(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            return "";
+        }
+        
+        // Remove null bytes and normalize
+        String clean = filename.replaceAll("\0", "");
+        int lastDot = clean.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < clean.length() - 1) {
+            return clean.substring(lastDot + 1);
+        }
+        return "";
+    }
+    
+    /**
+     * Securely extract base filename without null byte vulnerabilities.
+     */
+    private String getSecureBaseName(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            return "unnamed";
+        }
+        
+        // Remove null bytes and normalize
+        String clean = filename.replaceAll("\0", "");
+        int lastDot = clean.lastIndexOf('.');
+        if (lastDot > 0) {
+            return SecurityUtil.sanitizeFilename(clean.substring(0, lastDot));
+        }
+        return SecurityUtil.sanitizeFilename(clean);
     }
     
     /**
@@ -158,12 +215,12 @@ public class StorageService {
     }
     
     /**
-     * Calculate MD5 checksum of the uploaded file.
+     * Calculate SHA-256 checksum of the uploaded file.
      */
     private String calculateChecksum(MultipartFile file) {
         try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] digest = md5.digest(file.getBytes());
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            byte[] digest = sha256.digest(file.getBytes());
             StringBuilder sb = new StringBuilder();
             for (byte b : digest) {
                 sb.append(String.format("%02x", b));

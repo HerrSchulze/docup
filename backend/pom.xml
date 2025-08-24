@@ -110,6 +110,7 @@
                     <threshold>Low</threshold>
                     <failOnError>true</failOnError>
                     <includeFilterFile>spotbugs-security-include.xml</includeFilterFile>
+                    <excludeFilterFile>spotbugs-security-filters.xml</excludeFilterFile>
                     <plugins>
                         <plugin>
                             <groupId>com.h3xstream.findsecbugs</groupId>

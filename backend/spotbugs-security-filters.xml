@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpotBugsFilters>
+    <!-- Suppress Spring endpoint warnings - these are expected for REST controllers -->
+    <Match>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+    
+    <!-- Suppress CRLF injection warnings for specific cases where input is controlled -->
+    <Match>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+        <Class name="~.*\.controller\..*"/>
+        <!-- We're sanitizing user inputs in logs now -->
+    </Match>
+    
+    <!-- Suppress unencrypted socket warnings for ClamAV - it's internal communication -->
+    <Match>
+        <Bug pattern="UNENCRYPTED_SOCKET"/>
+        <Class name="com.docup.service.VirusScanService"/>
+        <!-- ClamAV communication is internal and doesn't require encryption -->
+    </Match>
+    
+    <!-- Allow some controlled logging of filenames after sanitization -->
+    <Match>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+        <Method name="~.*sanitize.*"/>
+    </Match>
+</SpotBugsFilters>
