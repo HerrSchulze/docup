@@ -15,6 +15,21 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Find and verify Tesseract installation
+RUN echo "=== Tesseract Installation Debug ===" && \
+    tesseract --version && \
+    echo "Available languages:" && \
+    tesseract --list-langs && \
+    echo "Searching for tessdata directories:" && \
+    find /usr -name "tessdata" -type d 2>/dev/null || true && \
+    echo "Searching for .traineddata files:" && \
+    find /usr -name "*.traineddata" -type f 2>/dev/null || true && \
+    echo "Content of /usr/share/tesseract-ocr/:" && \
+    ls -la /usr/share/tesseract-ocr/ 2>/dev/null || true
+
+# Set correct Tesseract environment variables based on actual installation
+ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
+
 # Set working directory
 WORKDIR /app
 
@@ -48,7 +63,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy built JAR from builder stage
-COPY --from=builder /app/target/docup-backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/docup-backend-1.0.0.jar app.jar
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
