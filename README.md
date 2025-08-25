@@ -1,20 +1,20 @@
 # DocUp - Document Upload and OCR Processing Application
 
-A full-stack web application for document upload, OCR text extraction, and virus scanning. Built with Angular frontend, Spring Boot backend, and Docker deployment.
+**Production Release v1.0.0** 🚀
 
-## 🚀 Features
+A robust, production-ready web application for secure document upload, virus scanning, and file management. Built with Angular frontend, Spring Boot backend, and Docker deployment.
 
-- **File Upload**: Support for JPG, PNG, and PDF files up to 50MB
-- **Camera Integration**: Direct photo capture from web browser
-- **OCR Processing**: Dual OCR system with client-side preview and server-side extraction
-- **Virus Scanning**: Real-time virus detection with ClamAV
-- **Image Processing**: Automatic resizing for large images to prevent crashes
-- **Cross-Browser Support**: Compatible with Chrome, Firefox, and other modern browsers
-- **Comprehensive Logging**: Detailed operation tracking and performance metrics
-- **Docker Deployment**: Fully containerized with nginx proxy
-- **Modern UI**: Clean, responsive interface inspired by professional design standards
+## 🚀 Production Features
 
-## 🏗️ Architecture
+- **✅ Secure File Upload**: Support for JPG, PNG, and PDF files up to 50MB
+- **✅ Real-time Virus Scanning**: ClamAV integration for malware detection  
+- **✅ Organized Storage**: UUID-based naming with date-organized directories
+- **✅ RESTful API**: Clean, documented endpoints for integration
+- **✅ Docker Deployment**: Production-ready containerization
+- **✅ Security Hardened**: Input validation, CORS protection, secure storage
+- **⏸️ OCR Processing**: Temporarily disabled for stability (coming in v1.1.0)
+
+## � Production Architecture
 
 - **Frontend**: Angular with TypeScript, Tesseract.js for preview, nginx proxy
 - **Backend**: Spring Boot 3 with Java 17, Tesseract OCR engine
