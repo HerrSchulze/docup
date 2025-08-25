@@ -65,12 +65,13 @@ WORKDIR /app
 # Copy built JAR from builder stage
 COPY --from=builder /app/target/docup-backend-1.0.0.jar app.jar
 
-# Create uploads directory
-RUN mkdir -p /app/uploads
-
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
-RUN chown -R appuser:appuser /app
+
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads && \
+    chown -R appuser:appuser /app && \
+    chmod -R 755 /app/uploads
 USER appuser
 
 # Expose port
